@@ -2,7 +2,7 @@ job("Job1"){
 description("this job will download the file from the github")
         
 scm{
-github('AJAY487-star/devops-task-6/tree/master', 'master')
+github('Mansh-star/devops-task-6/tree/master', 'master')
 }
 triggers {
 scm('* * * * *')
@@ -70,7 +70,7 @@ fi''')
 
 publishers {
 extendedEmail {
-recipientList('ajaysoul282@gmail.com')
+recipientList('manmohan4tech@gmail.com')
 defaultSubject('Something is wrong...')
 defaultContent('Testing failed...')
 contentType('text/html')
