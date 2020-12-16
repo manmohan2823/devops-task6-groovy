@@ -1,0 +1,91 @@
+job("Job1"){
+description("this job will download the file from the github")
+        
+scm{
+github('AJAY487-star/devops-task-6/tree/master', 'master')
+}
+triggers {
+scm('* * * * *')
+}
+steps {
+shell('cp -rvf * /root/ajay6/')
+}
+}
+
+job('Job2'){
+description("this job will deploy the the code in the webserver")
+
+triggers {  
+upstream('Job1', 'SUCCESS')
+}
+steps{
+remoteShell('root@192.168.99:108:22') {
+command('''if sudo ls /root/task6 | grep .html
+then
+if sudo kubectl get deployment | grep web
+then
+echo " deployment is running "
+else
+sudo kubectl create -f /root/web.yml
+sleep 30
+if kubectl get pods | grep webaj
+then
+ajay=$(sudo kubectl get pods -o=name | grep webaj | sed "s/^.\\{4\\}//")
+sudo kubectl cp /root/task6/index.html $ajay:/usr/local/apache2/htdocs/
+else
+echo "code not copy"
+fi
+fi
+else
+echo "not a html code"
+fi
+''')
+}
+}
+}
+
+job("Job3"){
+description("this job will do the testing")
+
+triggers {
+upstream('Job2','SUCCESS')
+}
+steps{
+remoteShell('root@192.168.99.108:22') {
+command('''if sudo kubectl get pods | grep webaj
+then
+webaj_status_code=$(curl -o /dev/null -s -w "%{http_code}" 192.168.99.102:30000)
+if [[ $webaj_status_code == 200 ]]
+then
+echo "website is running"
+else
+echo "their is some problem is website"
+exit 1
+fi
+else
+echo " not running "
+fi''')
+}
+}
+
+publishers {
+extendedEmail {
+recipientList('ajaysoul282@gmail.com')
+defaultSubject('Something is wrong...')
+defaultContent('Testing failed...')
+contentType('text/html')
+triggers {
+beforeBuild()
+stillUnstable {
+subject('Subject')
+content('Body')
+sendTo {
+developers()
+requester()
+culprits()
+}
+}
+}
+}
+}
+}
